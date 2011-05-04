@@ -1,4 +1,4 @@
-% Time-stamp: <2011-02-11 13:27:39 cmauclai>
+% Time-stamp: <2011-05-04 10:52:48 cmauclai>
 %
 % Copyright 2010 by Cedric Mauclair
 %
@@ -121,27 +121,45 @@
 \pgfkeysdef{/handlers/.estore in cs}{%
   \pgfkeysdef{\pgfkeyscurrentpath}{\@EA\edef\csname#1\endcsname{##1}}}
 
-%D handlers .store dimexpr in,
-%D          .store dimexpr in cs,
-%D          .store numexpr in,
-%D          .store numexpr in cs
+
+%D handlers .append to
 %D
-%D Same as .store in and .store in cs, except it store the evaluated
+%D Append or prepend code to an existing macro.
+
+\pgfkeys{%
+  /handlers/.append to/.code=
+    \pgfkeysdef{\pgfkeyscurrentpath}{%
+      \expandafter\@temptokena\expandafter{#1##1}%
+      \expandafter\edef\csname\expandafter\@gobble\string#1\endcsname{%
+        \the\@temptokena}},
+  /handlers/.prepend to/.code=
+    \pgfkeysdef{\pgfkeyscurrentpath}{%
+      \expandafter\@temptokena\expandafter{##1#1}%
+      \expandafter\edef\csname\expandafter\@gobble\string#1\endcsname{%
+        \the\@temptokena}}}
+
+
+%D handlers .estore dimexpr in,
+%D          .estore dimexpr in cs,
+%D          .estore numexpr in,
+%D          .estore numexpr in cs
+%D
+%D Same as .estore in and .estore in cs, except it store the evaluated
 %D dimension and integer.
 
-\pgfkeysdef{/handlers/.store dimexpr in}{%
+\pgfkeysdef{/handlers/.estore dimexpr in}{%
   \pgfkeysdef{\pgfkeyscurrentpath}{\@tempdima=\dimexpr##1\relax
     \@EA\def\@EA#1\@EA{\the\@tempdima}}}
 
-\pgfkeysdef{/handlers/.store dimexpr in cs}{%
+\pgfkeysdef{/handlers/.estore dimexpr in cs}{%
   \pgfkeysdef{\pgfkeyscurrentpath}{\@tempdima=\dimexpr##1\relax
     \@EAEAEA\def\@EA\csname\@EA#1\@EA\endcsname\@EA{\the\@tempdima}}}
 
-\pgfkeysdef{/handlers/.store numexpr in}{%
+\pgfkeysdef{/handlers/.estore numexpr in}{%
   \pgfkeysdef{\pgfkeyscurrentpath}{\@tempnuma=\numexpr##1\relax
     \@EA\def\@EA#1\@EA{\the\@tempnuma}}}
 
-\pgfkeysdef{/handlers/.store numexpr in cs}{%
+\pgfkeysdef{/handlers/.estore numexpr in cs}{%
   \pgfkeysdef{\pgfkeyscurrentpath}{\@tempnuma=\numexpr##1\relax
     \@EAEAEA\def\@EA\csname\@EA#1\@EA\endcsname\@EA{\the\@tempnuma}}}
 
