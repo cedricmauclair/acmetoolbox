@@ -1,0 +1,185 @@
+\documentclass{article}
+
+\usepackage[T1]   {fontenc}
+\usepackage[utf8] {inputenc}
+
+\usepackage{acmetoolbox}
+
+\def\macro#1{\texttt{\char`\\#1}}
+
+\parindent0pt
+
+\begin{document}
+
+
+\section{\macro{getrawparameters} and \macro{getraweparameters}}
+
+No need to declare family first.
+
+\def\toto{toto}
+\getrawparameters[test]{tata=\toto}
+\getraweparameters{tata=\toto}
+\def\toto{tata}
+
+\begin{itemize}
+\item \macro{getrawparameters} :  tata/\testtata
+\item \macro{getraweparameters} : toto/\tata
+\end{itemize}
+
+
+\section{\macro{getparameters} and \macro{geteparameters}}
+
+Must declare family first.
+
+\pgfkeys{/parameters/declare family=toto}
+\pgfkeys{/eparameters/declare family=etoto,
+  /eparameters/etoto/titi/.append to=\etototiti,
+  /eparameters/etoto/titi/.prepend code={hello}}
+
+hellohello/%
+\def\toto{toto}%
+\getparameters[toto]{titi=\toto}%
+\defaultsep{, }%
+\geteparameters[etoto]{titi=\toto, titi=tata}
+\def\toto{tata}
+
+\begin{itemize}
+\item \macro{getparameters} :  tata/\tototiti
+\item \macro{geteparameters} : toto, tata/\etototiti
+\end{itemize}
+
+
+\section{\macro{processcommalist}}
+
+\def\putparen#1{(#1)}
+(one)(two)(three=four)/%
+\processcommalist[one, two, three=four]\putparen
+
+
+\section{\macro{boxcontent}}
+
+\fbox{%
+  \boxcontent[% no space, will not work otherwise
+    width=\textwidth,
+    height=0.1\textheight,
+    align=\centering]
+  \hbox{hello}}
+
+\section{\macro{surroundbox}}
+
+\fbox{%
+  \surroundbox[%
+    center,
+    width=0.8\textwidth,
+    height=0.1\textheight]\hbox{salut}}
+
+% \def\toto{toto}%
+% \declareparameters[test]{%
+%   estore=toto,
+%   stores={tete, titi},
+%   dimension=tata,
+%   number=tutu}
+
+% \getparameters[test]{%
+%   toto=\toto,
+%   tete=tete,    titi=titi,
+%   tata=3cm+2pt, tutu=15+7.2}
+% \def\toto{tata}
+
+% --- test/\csname @@prefix\endcsname\ ---\\
+% 0. toto/\testtoto\\
+% 1. tete/\testtete\ -- titi/\testtiti\\
+% 2. 87.35826pt/\testtata\ -- 22.2/\testtutu
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \def\toto{toto}%
+% \declareparameters{%
+%   store=toto,
+%   stores={tete, titi},
+%   dimension=tata,
+%   number=tutu}
+
+% \getparameters{%
+%   toto=\toto,
+%   tete=titi,    titi=tete,
+%   tata=3cm+2pt, tutu=15+7.2}
+% \def\toto{tata}
+
+% --- /\csname @@prefix\endcsname\ ---\\
+% 0. tata/\toto\\
+% 1. titi/\tete\ -- tete/\titi\\
+% 2. 87.35826pt/\tata\ -- 22.2/\tutu
+
+% \clearpage
+
+% \section{\macro{blank}}
+
+% \makeatletter
+% \declareparameters[blank]{%
+%   % prefix added automatically for standard usages:
+%   % (e)store(s), dimension(s), number(s)
+%   dimension=@blank,% /parameters/blank/@blank to store arg evaluated as dimension
+%   % fine tuning needs explicit prefix first
+%   blank,% also /parameters/blank(/.cd)
+%   .is choice,
+%   small/.style={@blank=\smallskipamount},
+%   medium/.style={@blank=\medskipamount},
+%   big/.style={@blank=\bigskipamount},
+%   half/.style={@blank=.5\baselineskip},
+%   line/.style={@blank=\baselineskip},
+%   .unknown/.style={@blank=\pgfkeyscurrentname}}
+
+% \newcommand\setlen[2]{#1=\dimexpr#2\relax}
+
+% \newcommand\blank[1][line]{%
+%   \scratchdimen0pt
+%   \def\doit##1{%
+%     \splitatstar{##1}%
+%     \getparameters[blank]{\@dimen}%
+%     \setlen\scratchdimen{\scratchdimen+\blank@blank*\@count}}
+%   \processcommalist[#1]\doit
+%   \vskip\scratchdimen}
+
+% \newcommand\splitatstar[1]{%
+%   \doifinstringelse{*}{#1}
+%     {\blanksplit#1\blanksplit}
+%     {\blanksplit1*#1\blanksplit}}
+
+% \def\blanksplit#1*#2\blanksplit{%
+%   \def\@count{#1}\def\@dimen{#2}}
+
+% \makeatother
+
+% 0. default (line=\macro{baselineskip})
+% \blank
+% 1. 20pt + 2*2.5pt + 5pt = 30pt
+% \blank[20pt,2*2.5pt,5pt]
+% 2. 5*line
+% \blank[5*line]
+% 3. medium
+% \blank[medium]
+% 4. 2*small + medium (=big,=2*medium)
+% \blank[2*small, medium]
+% 5. big (=2*medium)
+% \blank[big]
+% 6. stop
+
+
+
+
+% \def\ensure#1#2#3\relax{%
+%   \ifdim#3#2#1\def#1{\dimexpr#3\relax}\fi}
+
+% \scratchdimen100pt
+% \the\scratchdimen
+
+% \ensure \scratchdimen > 200pt \relax
+% \the\scratchdimen
+
+% \ensure \scratchdimen < 150pt \relax
+% \the\scratchdimen
+
+
+
+\end{document}
