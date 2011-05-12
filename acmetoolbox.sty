@@ -1,4 +1,4 @@
-% Time-stamp: <2011-05-11 18:35:10 cmauclai>
+% Time-stamp: <2011-05-12 18:03:38 cmauclai>
 %
 % Copyright 2010 by Cedric Mauclair
 %
@@ -32,7 +32,14 @@
 
 %<< [· Some requirements ·····················] >>
 
-\RequirePackage{pgfkeys, pgffor, acmepkh}
+\RequirePackage{pgfkeys, pgffor, acmepkh, tikz}
+
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+
+\def\const@yes{yes}
+\def\const@no{no}
 
 %>>
 
@@ -73,7 +80,9 @@
 
 %D macro \doifpositive
 
-\def\doifpositiveelse#1#2#3{\ifdim#1<0pt#3\else#2\fi}
+\long\def\doifdimensionelse#1#2#3{\ifdim#1#2\else#3\fi}
+\long\def\doifpositive#1#2{\doifdimensionelse{#1>0pt}{#2}{}}
+\long\def\doifnegative#1#2{\doifdimensionelse{#1>0pt}{}{#2}}
 
 %>>
 %<< [· Usefull loop features ·················] >>
@@ -93,22 +102,34 @@
 %<< [· Usefull macros ························] >>
 
 % set dimen to an expression
-\def\setlen#1#2{#1\dimexpr#2\relax}
-\def\gsetlen#1#2{\global#1\dimexpr#2\relax}
+\def\setlen#1#2{#1\dimexpr#2\relax\ignorespaces}
+\def\gsetlen#1#2{\global#1\dimexpr#2\relax\ignorespaces}
 
-\def\setlencs #1#2{\def#1{\dimexpr#2\relax}}
-\def\esetlencs#1#2{\edef#1{\dimexpr#2\relax}}
-\def\gsetlencs#1#2{\gdef#1{\dimexpr#2\relax}}
-\def\xsetlencs#1#2{\xdef#1{\dimexpr#2\relax}}
+\def\setlencs #1#2{%
+  \scratchdimen\dimexpr#2\relax
+  \@EA\def\@EA#1\@EA{\the\scratchdimen}%
+  \ignorespaces}
+\def\gsetlencs#1#2{%
+  \scratchdimen\dimexpr#2\relax
+  \@EA\gdef\@EA#1\@EA{\the\scratchdimen}%
+  \ignorespaces}
 
 % ensure a dimen in above/below an expression
-\def\ensure #1#2#3\relax{\ifdim#3#2#1 #1{\dimexpr#3\relax}\fi}
-\def\gensure#1#2#3\relax{\ifdim#3#2#1 \global#1{\dimexpr#3\relax}\fi}
+\def\ensure #1#2#3\relax{%
+  \ifdim#3#2#1 #1{\dimexpr#3\relax}\fi\ignorespaces}
+\def\gensure#1#2#3\relax{%
+  \ifdim#3#2#1 \global#1{\dimexpr#3\relax}\fi\ignorespaces}
 
-\def\ensurecs #1#2#3\relax{\ifdim#3#2#1 \def#1{\dimexpr#3\relax}\fi}
-\def\eensurecs#1#2#3\relax{\ifdim#3#2#1 \edef#1{\dimexpr#3\relax}\fi}
-\def\gensurecs#1#2#3\relax{\ifdim#3#2#1 \gdef#1{\dimexpr#3\relax}\fi}
-\def\xensurecs#1#2#3\relax{\ifdim#3#2#1 \xdef#1{\dimexpr#3\relax}\fi}
+\def\ensurecs #1#2#3\relax{%
+  \ifdim#3#2#1
+    \scratchdimen#3
+    \@EA\def\@EA#1\@EA{\the\scratchdimen}\fi
+  \ignorespaces}
+\def\gensurecs#1#2#3\relax{%
+  \ifdim#3#2#1
+    \scratchdimen#3
+    \@EA\gdef\@EA#1\@EA{\the\scratchdimen}\fi
+  \ignorespaces}
 
 %>>
 
@@ -263,17 +284,17 @@
 
 \def\@@prefix{}
 
-\newcommand\declareparameters[1][]{%
+\newcommand\declareparameters[2][]{%
   \pgfqkeys{/parameters}{declare family=#1}% set \@@prefix too
-  \pgfqkeys{/parameters}}
+  \pgfqkeys{/parameters}{#2}\ignorespaces}
 
-\newcommand\getparameters[1][]{%
+\newcommand\getparameters[2][]{%
   \pgfqkeys{/parameters}{prefix=#1}% set \@@prefix
-  \pgfqkeys{/parameters\if @#1@\else/#1\fi}}
+  \pgfqkeys{/parameters\if @#1@\else/#1\fi}{#2}\ignorespaces}
 
-\newcommand\geteparameters[1][]{%
+\newcommand\geteparameters[2][]{%
   \pgfqkeys{/eparameters}{prefix=#1}% set \@@prefix
-  \pgfqkeys{/eparameters\if @#1@\else/#1\fi}}
+  \pgfqkeys{/eparameters\if @#1@\else/#1\fi}{#2}\ignorespaces}
 
 \def\dodoubleargumentwithset#1[#2][#3]{%
   \def\acme@@process##1{#1[##1][#3]}%
@@ -302,16 +323,16 @@
 \ifx\nextbox\undefined \newbox\nextbox \fi
 
 \long\def\dowithnextbox#1%
-  {\long\def\dodowithnextbox{#1}%
-   \afterassignment\dododowithnextbox
+  {\long\def\dododowithnextbox{#1}%
+   \afterassignment\dodowithnextbox
    \setbox\nextbox}
 
-\def\dododowithnextbox
-  {\aftergroup\dodowithnextbox}
+\def\dodowithnextbox
+  {\aftergroup\dododowithnextbox}
 
 \long\def\dowithnextboxcs#1%
-  {\let\dodowithnextbox#1%
-   \afterassignment\dododowithnextbox
+  {\let\dododowithnextbox#1%
+   \afterassignment\dodowithnextbox
    \setbox\nextbox}
 
 \def\nextboxht{\ht\nextbox}
@@ -323,62 +344,56 @@
 %>>
 %<< [· Put some space around boxes ···········] >>
 
-% constants
-\def\const@on{on}
-\def\const@off{off}
-\def\const@true{true}
-\def\const@false{false}
-\def\const@fit{fit}
+% helpers
+\def\inserttoifpositive#1{\doifpositive#1{to #1}}
+\def\sethsizeifpositive#1{\doifpositive#1{\hsize=#1}}
 
-% was the parameter numeric?
-\newif\if@nwd
-\newif\if@nht
-\newif\if@ndp
-
-%D macros \boxcontent
+%D macros \emboxit
 %D
 %D Put some content into a box.
 
-\declareparameters[boxcontent]{%
-  parameters=align,
-  dimensions={width, height}}
-
-\def\boxcontent{\begingroup
-  \dosingleempty\doboxcontent}
-
-\def\noboxcontent{\begingroup
-  \let\flushnextbox\@empty
-  \dosingleempty\doboxcontent}
-
-\long\def\doboxcontent[#1]#2#3{%
-  \getparameters [boxcontent]
-    {align=, width=-\maxdimen, height=-\maxdimen, #1}
-  \setbox\nextbox=#2{#3}%
-  \scratchtoken{#3}%
-  \doboxcontentindeed}
-
-\def\doboxcontentindeed{%
-  \global\setbox\nextbox=\vbox
-    \doifpositiveelse\boxcontentheight% [·height·]
-      {to \boxcontentheight}{} {% start vbox
-      \doifpositiveelse\boxcontentwidth% [·width·]
-        {\hsize=\boxcontentwidth}%
-        {\hsize=\nextboxwd}%
-      \boxcontentalign\the\scratchtoken}%
-  \setlencs\boxcontentwidth\nextboxwd%
-  \setlencs\boxcontentheight\nextboxht%
-  \flushnextbox\endgroup\ignorespaces}
-
-
-%D macro \surroundbox
-%D
-%D Put *things* arround a box.
-
-\declareparameters[surroundbox]{%
-  parameters={left, right, top, bottom},
+\declareparameters[emboxit]{%
+  parameters={align},
   dimensions={width, height},
   % fine tuning needs explicit prefix
-  surroundbox,
+  emboxit,
+  % start in vmode or not, default is 'yes'
+  vmode/.is choice,
+  vmode/yes/.code=\emboxitvmodetrue,
+  vmode/no/.code=\emboxitvmodefalse}
+
+\newif\ifemboxitvmode
+
+\def\emboxit{\dosingleempty\doemboxit}
+\long\def\doemboxit[#1]{%
+  \getparameters [emboxit]
+    {vmode=yes, align=, width=-1pt, height=-1pt, #1}%
+  \afterassignment\dodoemboxit\scratchtoken}
+
+\def\dodoemboxit{%
+  \setbox\nextbox=\vbox
+    \inserttoifpositive\emboxitheight{% [·height·]
+      \sethsizeifpositive\emboxitwidth% [·width·]
+      \ifemboxitvmode\else\leavevmode\fi
+      \emboxitalign\the\scratchtoken}%
+  \setlencs\emboxitwidth\nextboxwd
+  \setlencs\emboxitheight\nextboxht
+  \ignorespaces}
+
+
+%D macro \wrapit
+%D
+%D Embox content then put *things* arround it.
+
+\declareparameters[wrapit]{%
+  parameters={align, left, right, top, bottom},
+  dimensions={width, height, allwidth, allheight},
+  % fine tuning needs explicit prefix
+  wrapit,
+  % start in vmode or not, default is 'yes'
+  vmode/.is choice,
+  vmode/yes/.code=\emboxitvmodetrue,
+  vmode/no/.code=\emboxitvmodefalse,
   % placement of text inside box
   north/.style={left=\hss, right=\hss, bottom=\vss},
   south/.style={left=\hss, right=\hss, top=\vss},
@@ -390,245 +405,278 @@
   south east/.style={left=\hss, top=\vss},
   center/.style={left=\hss, right=\hss, top=\vss, bottom=\vss}}
 
-\def\surroundbox{\dosingleempty\dosurroundbox}
-\def\dosurroundbox[#1]{%
-  \getparameters [surroundbox]
-    {width=-\maxdimen, height=-\maxdimen,
-     left=, right=, top=, bottom=, #1}
-  \futurelet\nexttoken\dodosurroundbox}
+\def\wrapit{\dosingleempty\dowrapit}
+\def\dowrapit[#1]{%
+  \getparameters [wrapit]
+    {vmode=yes, align=, width=-1pt, height=-1pt,
+     allwidth=-10pt, allheight=-1pt,
+     left=, right=, top=, bottom=, #1}%
+  \getparameters [emboxit]
+    {align=\wrapitalign, width=\wrapitwidth, height=\wrapitheight}%
+  \afterassignment\dodowrapit\scratchtoken}
 
-\def\dodosurroundbox{%
+\def\dodowrapit{%
+  \dodoemboxit
+  % ensure consistency (if allwidth specified) or adadpt to content
+  \doifpositive\wrapitallwidth
+    {\ensurecs\wrapitallwidth>\emboxitwidth\relax}%
+  % ensure consistency (if allheight specified) or adadpt to content
+  \doifpositive\wrapitallheight
+    {\ensurecs\wrapitallheight>\emboxitheight\relax}%
+  \setbox\nextbox=
+  \vbox \inserttoifpositive\wrapitallheight{%    [·height·]
+      \wrapittop
+      \hbox \inserttoifpositive\wrapitallwidth{% [·width·]
+        \wrapitleft\box\nextbox\wrapitright}%
+      \wrapitbottom}\ignorespaces}
+
+%D macro \wrapbox
+%D
+%D Put *things* arround an existing box.
+
+\declareparameters[wrapbox]{%
+  parameters={left, right, top, bottom},
+  dimensions={width, height},
+  % fine tuning needs explicit prefix
+  wrapbox,
+  % placement of text inside box
+  north/.style={left=\hss, right=\hss, bottom=\vss},
+  south/.style={left=\hss, right=\hss, top=\vss},
+  west/.style={right=\hss, top=\vss, bottom=\vss},
+  east/.style={left=\hss, top=\vss, bottom=\vss},
+  north west/.style={right=\hss, bottom=\vss},
+  south west/.style={right=\hss, top=\vss},
+  north east/.style={left=\hss, bottom=\vss},
+  south east/.style={left=\hss, top=\vss},
+  center/.style={left=\hss, right=\hss, top=\vss, bottom=\vss}}
+
+\def\wrapbox{\dosingleempty\dowrapbox}
+\def\dowrapbox[#1]{%
+  \getparameters [wrapbox]
+    {width=-1pt, height=-1pt,
+     left=, right=, top=, bottom=, #1}%
+  \futurelet\nexttoken\dodowrapbox}
+
+\def\dodowrapbox{%
   \ifx\nexttoken\box
-    \def\next{\afterassignment\dosurroundboxindeed\setbox\nextbox=}%
+    \def\next{\afterassignment\dodowrapboxindeed\setbox\nextbox}%
   \else
-    \def\next{\dowithnextbox\dosurroundboxindeed}%
+    \def\next{\dowithnextbox\dodowrapboxindeed}%
   \fi\next}
 
-\def\dosurroundboxindeed{%
-  \global\setbox\nextbox=
-    \flushnextbox%todo: WTF?
-  \vbox \doifpositiveelse\surroundboxheight% [·height·]
-      {to \surroundboxheight}{} {% start vbox
-      \surroundboxtop
-      \hbox \doifpositiveelse\surroundboxwidth% [·width·]
-              {to \surroundboxwidth}{}{%
-        \surroundboxleft\box\nextbox\surroundboxright}%
-      \surroundboxbottom}\ignorespaces}
+\def\dodowrapboxindeed{%
+  % ensure consistency (if allwidth specified) or adadpt to content
+  \doifpositive\wrapboxwidth
+    {\ensurecs\wrapboxwidth>\nextboxwd\relax}%
+  % ensure consistency (if allheight specified) or adadpt to content
+  \doifpositive\wrapboxheight
+    {\ensurecs\wrapboxheight>\nextboxht\relax}%
+  \setbox\nextbox=
+  \vbox \inserttoifpositive\wrapboxheight{%    [·height·]
+      \wrapboxtop
+      \hbox \inserttoifpositive\wrapboxwidth{% [·width·]
+        \wrapboxleft\box\nextbox\wrapboxright}%
+      \wrapboxbottom}\ignorespaces}
 
 %>>
 
-%<< [· Framed text   (use \hbox) ·············] >>
+%<< [· Framed text ···························] >>
 
-% % new box to manipulate
-% \newbox\framedbox
+% new box to manipulate
+\newbox\framedbox
+\def\framedboxwd{\wd\framedbox}
+\def\framedboxht{\ht\framedbox}
+\def\framedboxdp{\dp\framedbox}
+\def\fbwd{\wd\framedbox}
+\def\fbht{\ht\framedbox}
+\def\fbdp{\dp\framedbox}
 
-% \def\framedboxwd{\wd\framedbox}
-% \def\framedboxht{\ht\framedbox}
-% \def\framedboxdp{\dp\framedbox}
+%<< ———— available settings                —————————————— >>
 
-% % parameters
+\declareparameters[framed@]{%
+  parameters={%
+    left, right, top, bottom},
+  dimensions={%
+    width,  minwidth,  maxwidth,
+    height, minheight, maxheight,
+    leftmargin, rightmargin, topmargin, bottommargin,
+    leftoffset, rightoffset, topoffset, bottomoffset},
+  % fine tuning needs explicit prefix
+  framed@,
+  % ———[·~ options ~·]———
+  options/.append to=\framed@options,
+  % ———[·~ vmode ~·]———
+  vmode/.is choice,
+  vmode/yes/.code=\let\framed@vmode\const@yes,
+  vmode/no/.code=\let\framed@vmode\const@no,
+  % ———[·~ margins & offsets ~·]———
+  margin/.style=
+    {leftmargin=#1, rightmargin=#1, topmargin=#1, bottommargin=#1},
+  offset/.style=
+    {leftoffset=#1, rightoffset=#1, topoffset=#1, bottomoffset=#1},
+  % ———[·~ frame ~·]———
+  frame/.style={@frame/.list={#1}},
+  frame/custom/.code=\def\framed@@framecustom{#1},
+  @frame/clean/.code=
+    \let\framed@leftframe\@empty
+    \let\framed@rightframe\@empty
+    \let\framed@topframe\@empty
+    \let\framed@bottomframe\@empty,
+  @frame/.is choice,
+  @frame/left/.code=
+    \let\framed@leftframe\framed@@leftframe
+    \let\framed@frame\@empty,
+  @frame/right/.code=
+    \let\framed@rightframe\framed@@rightframe
+    \let\framed@frame\@empty,
+  @frame/top/.code=
+    \let\framed@topframe\framed@@topframe
+    \let\framed@frame\@empty,
+  @frame/bottom/.code=
+    \let\framed@bottomframe\framed@@bottomframe
+    \let\framed@frame\@empty,
+  @frame/on/.code=\def\framed@frame{%
+      \ifx\framed@@framecustom\@empty \framed@@frame
+      \else                           \framed@@framecustom\fi},
+  @frame/on/.prefix style={@frame=clean},
+  @frame/off/.code=
+    \let\framed@frame\@empty,
+  @frame/off/.prefix style={@frame=clean},
+  % ———[·~ background ~·]———
+  background/.is choice,
+  background/on/.code=\def\framed@background{%
+    \ifx\framed@@backgroundcustom\@empty \framed@@background
+    \else                                \framed@@backgroundcustom\fi},
+  background/off/.code=\let\framed@background\@empty,
+  background/.append code=\def\framed@backgroundstate{#1},
+  background/custom/.code=\def\framed@@backgroundcustom{#1},
+  % ———[·~ some additions ~·]———
+  width/.append style={minwidth=#1, maxwidth=#1},
+  height/.append style={minheight=#1, maxheight=#1},
+  % ———[·~ horizontal alignment ~·]———
+  align/.style={@align/.list={#1}},
+  @align/.is choice,
+  @align/default/.code=\let\framed@align\@empty,
+  @align/right/.code=\let\framed@align\raggedright,
+  @align/left/.code=\let\framed@align\raggedleft,
+  @align/center/.code=\let\framed@align\centering,
+  @align/flushleft/.style={@align=right},
+  @align/flushright/.style={@align=left}
+  % ———[·~ vertical alignment ~·]———
+  @align/top/.code=
+    \let\framed@top\@empty\let\framed@bottom\vss,
+  @align/bottom/.code=
+    \let\framed@top\vss\let\framed@bottom\@empty,
+  @align/middle/.code=
+    \let\framed@top\vss\let\framed@bottom\vss,
+}
 
-% \pgfkeys{/acme/framed/.cd,
-%   %% parameters below %%
-%   .parameters={
-%     left, right, top, bottom,
-%     leftframe, rightframe, topframe, bottomframe},
-%   tikzoptions/.estore in=\acmeframedtikzoptions,
-%   %% dimensions below %%
-%   .dimensions={
-%     width,  minwidth,  maxwidth,
-%     height, minheight, maxheight,
-%     leftmargin, rightmargin, topmargin, bottommargin,
-%     leftoffset, rightoffset, topoffset, bottomoffset}}
-
-
-% \pgfkeys{/acme/framed/.cd,
-%   % [·some aliases·]
-%   margin/.style={
-%     leftmargin=#1, rightmargin=#1, topmargin=#1, bottommargin=#1},
-%   offset/.style={
-%     leftoffset=#1, rightoffset=#1, topoffset=#1, bottomoffset=#1},
-%   % [·frame·]
-%   leftframe/.is choice,
-%   leftframe/on/.code=\def\acmeframedleftframe@@
-%     {\path [draw] (0,0) -- ++(0,-\framedboxht);}%
-%     \let\acmeframedleftframe\c@@on,
-%   leftframe/off/.code=
-%     \let\acmeframedleftframe@@\@empty
-%     \let\acmeframedleftframe\c@@off,
-%   %
-%   rightframe/.is choice,
-%   rightframe/on/.code=\def\acmeframedrightframe@@
-%     {\path [draw] (\framedboxwd,0) -- ++(0,-\framedboxht);}%
-%     \let\acmeframedrightframe\c@@on,
-%   rightframe/off/.code=\let\acmeframedrightframe@@\@empty
-%     \let\acmeframedrightframe\c@@off,
-%   %
-%   topframe/.is choice,
-%   topframe/on/.code=\def\acmeframedtopframe@@
-%     {\path [draw] (0,0) -- ++(\framedboxwd,0);}%
-%     \let\acmeframedtopframe\c@@on,
-%   topframe/off/.code=\let\acmeframedtopframe@@\@empty
-%     \let\acmeframedtopframe\c@@off,
-%   %
-%   bottomframe/.is choice,
-%   bottomframe/on/.code=\def\acmeframedbottomframe@@
-%     {\path [draw] (0,-\framedboxht) -- ++(\framedboxwd,0);}%
-%     \let\acmeframedbottomframe\c@@on,
-%   bottomframe/off/.code=\let\acmeframedbottomframe@@\@empty
-%     \let\acmeframedbottomframe\c@@off,
-%   %
-%   frame/.is choice,
-%   frame/on/.code=\def\acmeframedframe@@
-%     {\path [draw] (0,0) rectangle ++(\framedboxwd,-\framedboxht);},
-%   frame/on/.append style=
-%     {leftframe=on,  rightframe=on,  topframe=on,  bottomframe=on},
-%   frame/off/.code=\let\acmeframedframe@@\@empty,
-%   frame/off/.append style={
-%     leftframe=off,  rightframe=off,  topframe=off,  bottomframe=off},
-%   customframe/.code=\def\acmeframedcustomframe@@{#1},
-%   % [·background·]
-%   background/.is choice,
-%   background/on/.code=\def\acmeframedbackground@@
-%     {\path [fill] (0,0) rectangle ++(\framedboxwd,-\framedboxht);},
-%   background/off/.code=\let\acmeframedbackground@@\@empty,
-%   custombackground/.code=\def\acmeframedcustombackground@@{#1},
-%   % [·some additions·]
-%   width/.append style={minwidth=#1, maxwidth=#1},
-%   height/.append style={minheight=#1, maxheight=#1},
-%   % [·alignment·]
-%   align/.style={@align/.list={#1}},
-%   % [·horizontal alignment·]
-%   @align/.is choice,
-%   @align/default/.code=\let\acmeframedalign\@empty,
-%   @align/right/.code=\let\acmeframedalign\raggedright,
-%   @align/left/.code=\let\acmeframedalign\raggedleft,
-%   @align/center/.code=\let\acmeframedalign\centering,
-%   % [·vertical alignment·]
-%   @align/top/.code=
-%     \let\acmeframedtop\@empty
-%     \let\acmeframedbottom\vss,
-%   @align/bottom/.code=
-%     \let\acmeframedtop\vss
-%     \let\acmeframedbottom\@empty,
-%   @align/middle/.code=
-%     \let\acmeframedtop\vss
-%     \let\acmeframedbottom\vss,
-%   @align/flushleft/.style={@align=right},
-%   @align/flushright/.style={@align=left}}
-
-% \newdimen\nextdepth
-
-% \def\setupframed{\getparameters[/acme/framed]}
-
-% \def\framed{\dosingleempty\doframed}
-% \long\def\doframed[#1]#2{\begingroup
-%   \setupframed
-%     [frame=on, customframe=false,
-%      background=off, custombackground=false,
-%      margin=0pt, offset=3pt,
-%      width=-\maxdimen, height=-\maxdimen,
-%      maxwidth=\hsize,  maxheight=\maxdimen,
-%      left=, right=, top=, bottom=,
-%      align={default, middle},
-%      tikzoptions={draw}, #1]
-%   \let\\\newline
-%   %% —————————————————————————————————————————————————— %%
-%   % [·adjust size of text: width·]
-%   \doifnotvaliddimension\acmeframedwidth{%
-%     \noboxcontent\hbox{#2}%
-%     \evalasdimen\acmeframedwidth
-%       {\boxcontent@@width+\acmeframedleftoffset+\acmeframedrightoffset}}%
-%   \normalizeabove\acmeframedwidth\acmeframedminwidth
-%   \normalizebelow\acmeframedwidth\acmeframedmaxwidth
-%   \evalasdimen\acmeframedwidth
-%     {\acmeframedwidth-\acmeframedleftoffset-\acmeframedrightoffset}%
-%   \noboxcontent[width=\acmeframedwidth, align=\acmeframedalign]
-%     \hbox{\hsize=\acmeframedwidth#2}
-%   % [·adjust size of text: height·]
-%   \doifnotvaliddimension\acmeframedheight{%
-%     \evalasdimen\acmeframedheight
-%       {\boxcontent@@height+\acmeframedtopoffset}}%
-%   \normalizeabove\acmeframedheight\acmeframedminheight
-%   \normalizebelow\acmeframedheight\acmeframedmaxheight
-%   % [·tight box around text·]
-%   \evalasdimen\acmeframedheight
-%     {\acmeframedheight-\acmeframedtopoffset}%
-%   %% —————————————————————————————————————————————————— %%
-%   \surroundbox
-%     [width=
-%       \acmeframedwidth+\acmeframedleftoffset+\acmeframedrightoffset,
-%      height=
-%       \acmeframedheight+\acmeframedtopoffset+\acmeframedbottomoffset,
-%      left=\kern\acmeframedleftoffset\acmeframedleft,
-%      right=\acmeframedright\kern\acmeframedrightoffset,
-%      top=\kern\acmeframedtopoffset\acmeframedtop,
-%      bottom=\acmeframedbottom\kern\acmeframedbottomoffset]\box\nextbox
-%   \setbox\framedbox=\box\nextbox
-%   %% —————————————————————————————————————————————————— %%
-%   \setbox\nextbox=\hbox{%
-%     \expandonearg\tikzpicture[\acmeframedtikzoptions]
-%       \path [use as bounding box] (0,0)
-%         rectangle ++(\framedboxwd,-\framedboxht);
-%       % [·four sides ==> one rectangle·]
-%       \ifx\acmeframedcustombackground@@\c@@false
-%           \acmeframedbackground@@
-%         \else
-%           \acmeframedcustombackground@@
-%       \fi
-%       \ifx\acmeframedleftframe\c@@on
-%       \ifx\acmeframedrightframe\c@@on
-%       \ifx\acmeframedtopframe\c@@on
-%       \ifx\acmeframedbottomframe\c@@on
-%         \let\acmeframedleftframe@@\@empty
-%         \let\acmeframedrightframe@@\@empty
-%         \let\acmeframedtopframe@@\@empty
-%         \let\acmeframedbottomframe@@\@empty
-%         \ifx\acmeframedcustomframe@@\c@@false
-%           \acmeframedframe@@
-%         \else
-%           \acmeframedcustomframe@@\fi
-%       \fi\fi\fi\fi%
-%       \acmeframedleftframe@@ \acmeframedrightframe@@
-%       \acmeframedtopframe@@  \acmeframedbottomframe@@
-%       \node [anchor=north west, inner sep=0pt, outer sep=0pt]
-%         at (0,0) {\box\framedbox};
-%   \endtikzpicture}%
-%   \surroundbox[%
-%     left=\kern\acmeframedleftmargin, right=\kern\acmeframedrightmargin,
-%     top=\kern\acmeframedtopmargin, bottom=\kern\acmeframedbottommargin]%
-%     \box\nextbox
-%   \box\nextbox
-%   \global\nextdepth=\dimexpr\framedboxdp
-%                             +\acmeframedbottomoffset
-%                             +\acmeframedbottommargin\relax
-%   \endgroup}
+% default frame/background
+\def\framed@@leftframe   {\path [draw] (0,0) -- ++(0,-\fbht);}
+\def\framed@@topframe    {\path [draw] (0,0) -- ++(\fbwd,0);}
+\def\framed@@rightframe  {\path [draw] (\fbwd,0)  -- ++(0,-\fbht);}
+\def\framed@@bottomframe {\path [draw] (0,-\fbht) -- ++(\fbwd,0);}
+\def\framed@@frame       {\path [draw] (0,0) rectangle ++(\fbwd,-\fbht);}
+\def\framed@@background  {\path [fill] (0,0) rectangle ++(\fbwd,-\fbht);}
+\let\framed@@framecustom\@empty
+\let\framed@@backgroundcustom\@empty
 
 %>>
-%<< [· Framed text   (use \vbox) ·············] >>
+%<< ———— implementation of the framed text —————————————— >>
 
-% \newenvironment{framedtext}[1][]
-% {\begingroup
-%  \def\acmeframedtextoptions{width=\hsize, #1}%
-%  \setupframed
-%    [frame=on, customframe=false, background=off,
-%     margin=0pt, offset=3pt,
-%     width=\hsize, height=-\maxdimen, maxheight=\maxdimen,
-%     left=, right=, top=, bottom=,
-%     align={default, middle},
-%    tikzoptions={draw}, #1]
-%  \setbox\nextbox\vbox\bgroup
-%    \hsize=\dimexpr\acmeframedwidth-\acmeframedleftoffset
-%                                   -\acmeframedrightoffset\relax
-%    \acmeframedalign\ignorespaces}
-% {\egroup
-%  \leavevmode
-%  \expandonearg\framed[\acmeframedtextoptions]{\box\nextbox}%
-%  \endgroup}
+\newdimen\nextdepth
 
+\def\setupframed{\getparameters[framed@]}
 
-% %>>
-% %<< [· Inframed text (use \hbox) ·············] >>
+% command (start in hmode by default)
+\def\framed{\dosingleempty\doframed}
+\long\def\doframed[#1]#2{\begingroup
+  \setupframed
+    {frame=on,    background=off, vmode=no,
+     margin=0pt,  offset=3pt,
+     width=-1pt,  minwidth=-1pt,  maxwidth=\hsize,
+     height=-1pt, minheight=-1pt, maxheight=\maxdimen,
+     left=, right=, top=, bottom=,
+     align={default, middle},
+     options={draw, fill=white, thick}, #1}
+  % \let\\\newline
+  %% —————————————————————————————————————————————————— %%
+  % [·adjust size of text: width·]
+  \doifnegative\framed@width{%
+    \setbox\nextbox=\hbox{#2}%
+    \setlencs\framed@width{%
+      \nextboxwd+\framed@leftoffset+\framed@rightoffset}}%
+  \ensurecs\framed@width>\framed@minwidth\relax
+  \ensurecs\framed@width<\framed@maxwidth\relax
+  \setlencs\framed@width{%
+    \framed@width-\framed@leftoffset-\framed@rightoffset}
+  \emboxit[vmode=\framed@vmode,
+           width=\framed@width,
+           align=\framed@align]{#2}
+  % [·adjust size of text: height·]
+  \doifnegative\framed@height{%
+    \setlencs\framed@height{\nextboxht+\framed@topoffset}}%
+  \ensurecs\framed@height>\framed@minheight\relax
+  \ensurecs\framed@height<\framed@maxheight\relax
+  % [·tight box around text·]
+  \setlencs\framed@height{\framed@height-\framed@topoffset}
+  %% —————————————————————————————————————————————————— %%
+  \wrapbox[%
+    width=\framed@width+\framed@leftoffset+\framed@rightoffset,
+    height=\framed@height+\framed@topoffset+\framed@bottomoffset,
+    left=\kern\framed@leftoffset\framed@left,
+    right=\framed@right\kern\framed@rightoffset,
+    top=\kern\framed@topoffset\framed@top,
+    bottom=\framed@bottom\kern\framed@bottomoffset]\box\nextbox
+  \setbox\framedbox=\box\nextbox
+  %% —————————————————————————————————————————————————— %%
+  \setbox\nextbox=\hbox{%
+    \expandonearg\tikzpicture[\framed@options]
+      \path [use as bounding box] (0,0) rectangle ++(\fbwd,-\fbht);
+      % [·'frame=on' is explicit·]
+      \ifx\framed@framestate\const@on
+        \framed@frame\fi
+      % [·four sides ==> full frame·]
+      \ifx\framed@leftframe\@empty\else
+      \ifx\framed@rightframe\@empty\else
+      \ifx\framed@topframe\@empty\else
+      \ifx\framed@bottomframe\@empty\else
+        \getparameters[framed@]{frame=on}
+      \fi\fi\fi\fi
+      \framed@background
+      \framed@leftframe \framed@rightframe
+      \framed@topframe  \framed@bottomframe
+      \framed@frame
+      \node [anchor=north west, inner sep=0pt, outer sep=0pt]
+        at (0,0) {\box\framedbox};
+  \endtikzpicture}%
+  \wrapbox[%
+    left=\kern\framed@leftmargin,
+    right=\kern\framed@rightmargin,
+    top=\kern\framed@topmargin,
+    bottom=\kern\framed@bottommargin]\box\nextbox
+  \box\nextbox
+  \gsetlen\nextdepth{\fbdp+\framed@bottomoffset+\framed@bottommargin}
+  \endgroup}
+
+% environment (start in vmode by default)
+\newenvironment{framedtext}[1][]
+{\begingroup
+ \def\framedtext@options{#1}%
+ \setupframed{vmode=yes, width=\hsize, offset=3pt, align=default, #1}
+ \setbox\nextbox\vbox\bgroup
+   \hsize=\dimexpr\framed@width-\framed@leftoffset
+                               -\framed@rightoffset\relax
+   \ifx\framed@vmode\const@yes\else\leavevmode\fi
+   \framed@align\ignorespaces}
+{\egroup
+ \expandonearg\framed[\framedtext@options]{\box\nextbox}%
+ \endgroup}
+
+%>>
+
+%>>
+%<< [· Inframed text (use \hbox) ·············] >>
 
 % \def\strutdp{\dp\strutbox}
 % \def\strutht{\ht\strutbox}
@@ -716,13 +764,13 @@
 
 %<< * \definelanguageswitch                     >>
 
-\def\definelanguageswitch{\dotripleempty\dodefinelanguageswitch}
-\def\dodefinelanguageswitch[#1][#2][#3]{%
-  \ifthirdargument
-    \@EA\def\csname#2\endcsname{\simplegroupedcommand{\selectlanguage{#1}#3}{}}
-  \else
-    \@EA\def\csname#1\endcsname{\simplegroupedcommand{\selectlanguage{#1}#2}{}}
-  \fi}
+% \def\definelanguageswitch{\dotripleempty\dodefinelanguageswitch}
+% \def\dodefinelanguageswitch[#1][#2][#3]{%
+%   \ifthirdargument
+%     \@EA\def\csname#2\endcsname{\simplegroupedcommand{\selectlanguage{#1}#3}{}}
+%   \else
+%     \@EA\def\csname#1\endcsname{\simplegroupedcommand{\selectlanguage{#1}#2}{}}
+%   \fi}
 
 %>>
 

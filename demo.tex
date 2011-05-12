@@ -5,6 +5,10 @@
 
 \usepackage{acmetoolbox}
 
+\usepackage[english]{babel}
+\usepackage{blindtext}
+
+\let\type\texttt
 \def\macro#1{\texttt{\char`\\#1}}
 
 \parindent0pt
@@ -56,130 +60,146 @@ hellohello/%
 \processcommalist[one, two, three=four]\putparen
 
 
-\section{\macro{boxcontent}}
+\clearpage
+\section{\macro{emboxit}}
 
 \fbox{%
-  \boxcontent[% no space, will not work otherwise
+  \emboxit [width=0.85\textwidth]{
+    \hbox{\bf vmode} \blindtext}
+  \flushnextbox}
+
+\fbox{%
+  \emboxit[width=0.85\textwidth,  vmode=no]{
+    \hbox{\bf hmode} \blindtext}
+  \flushnextbox}
+
+\fbox{%
+  \emboxit[width=0.85\textwidth,  vmode=no]{%
+    \hbox{\bf hmode} \blindtext}
+  \flushnextbox}
+
+\blank[line]
+See the difference. Also note that if in hmode, you need to take care of
+spurious spaces.
+
+
+\clearpage
+\section{\macro{wrapit}}
+
+\fbox{%
+  \wrapit[width=200pt, allwidth=0.8\textwidth,
+          allheight=0.5\textheight, south west]{%
+    \hbox{\bf vmode} \blindtext}
+  \flushnextbox}
+
+
+\newdimen\margin\margin15pt
+\fbox{%
+  \wrapit[width=\textwidth-2\margin,
+          left=\hskip\margin, right=\hskip\margin,
+          top=\vskip\margin,  bottom=\vskip\margin, vmode=no]{%
+      \hbox{\bf hmode} Very small paragraph, barely a single line.}
+  \flushnextbox}
+
+
+\def\margin{15pt}
+\fbox{%
+  \wrapit[width=\textwidth-\margin*2, % (syntax is different when using a
+                                      %  command instead of a dimension)
+          left=\hskip\margin, right=\hskip\margin,
+          top=\vskip\margin,  bottom=\vskip\margin]{
+    \hbox{\bf vmode} Very small paragraph, barely a single line.}
+  \flushnextbox}
+
+
+\clearpage
+\section{\macro{wrapbox}}
+
+\setbox42\vbox{\hsize=200pt\blindtext}
+
+\fbox{%
+  \wrapbox[width=0.8\textwidth, height=0.5\textheight, south west]\box42
+  \flushnextbox}
+
+
+\newdimen\margin\margin15pt
+\setbox42=\vbox{%
+  \hsize=\dimexpr\textwidth-2\margin\relax
+  Very small paragraph, barely a single line.}
+
+\fbox{%
+  \wrapbox[%
     width=\textwidth,
-    height=0.1\textheight,
-    align=\centering]
-  \hbox{hello}}
+    left=\hskip\margin, right=\hskip\margin,
+    top=\vskip\margin, bottom=\vskip\margin]\box42
+  \flushnextbox}
 
-\section{\macro{surroundbox}}
-
+\def\margin{15pt}
 \fbox{%
-  \surroundbox[%
-    center,
-    width=0.8\textwidth,
-    height=0.1\textheight]\hbox{salut}}
-
-% \def\toto{toto}%
-% \declareparameters[test]{%
-%   estore=toto,
-%   stores={tete, titi},
-%   dimension=tata,
-%   number=tutu}
-
-% \getparameters[test]{%
-%   toto=\toto,
-%   tete=tete,    titi=titi,
-%   tata=3cm+2pt, tutu=15+7.2}
-% \def\toto{tata}
-
-% --- test/\csname @@prefix\endcsname\ ---\\
-% 0. toto/\testtoto\\
-% 1. tete/\testtete\ -- titi/\testtiti\\
-% 2. 87.35826pt/\testtata\ -- 22.2/\testtutu
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% \def\toto{toto}%
-% \declareparameters{%
-%   store=toto,
-%   stores={tete, titi},
-%   dimension=tata,
-%   number=tutu}
-
-% \getparameters{%
-%   toto=\toto,
-%   tete=titi,    titi=tete,
-%   tata=3cm+2pt, tutu=15+7.2}
-% \def\toto{tata}
-
-% --- /\csname @@prefix\endcsname\ ---\\
-% 0. tata/\toto\\
-% 1. titi/\tete\ -- tete/\titi\\
-% 2. 87.35826pt/\tata\ -- 22.2/\tutu
-
-% \clearpage
-
-% \section{\macro{blank}}
-
-% \makeatletter
-% \declareparameters[blank]{%
-%   % prefix added automatically for standard usages:
-%   % (e)store(s), dimension(s), number(s)
-%   dimension=@blank,% /parameters/blank/@blank to store arg evaluated as dimension
-%   % fine tuning needs explicit prefix first
-%   blank,% also /parameters/blank(/.cd)
-%   .is choice,
-%   small/.style={@blank=\smallskipamount},
-%   medium/.style={@blank=\medskipamount},
-%   big/.style={@blank=\bigskipamount},
-%   half/.style={@blank=.5\baselineskip},
-%   line/.style={@blank=\baselineskip},
-%   .unknown/.style={@blank=\pgfkeyscurrentname}}
-
-% \newcommand\setlen[2]{#1=\dimexpr#2\relax}
-
-% \newcommand\blank[1][line]{%
-%   \scratchdimen0pt
-%   \def\doit##1{%
-%     \splitatstar{##1}%
-%     \getparameters[blank]{\@dimen}%
-%     \setlen\scratchdimen{\scratchdimen+\blank@blank*\@count}}
-%   \processcommalist[#1]\doit
-%   \vskip\scratchdimen}
-
-% \newcommand\splitatstar[1]{%
-%   \doifinstringelse{*}{#1}
-%     {\blanksplit#1\blanksplit}
-%     {\blanksplit1*#1\blanksplit}}
-
-% \def\blanksplit#1*#2\blanksplit{%
-%   \def\@count{#1}\def\@dimen{#2}}
-
-% \makeatother
-
-% 0. default (line=\macro{baselineskip})
-% \blank
-% 1. 20pt + 2*2.5pt + 5pt = 30pt
-% \blank[20pt,2*2.5pt,5pt]
-% 2. 5*line
-% \blank[5*line]
-% 3. medium
-% \blank[medium]
-% 4. 2*small + medium (=big,=2*medium)
-% \blank[2*small, medium]
-% 5. big (=2*medium)
-% \blank[big]
-% 6. stop
+  \wrapbox[%
+    width=\textwidth,
+    left=\hskip\margin, right=\hskip\margin,
+    top=\vskip\margin, bottom=\vskip\margin]
+  \vbox{%
+    \hsize=\dimexpr\textwidth-\margin*2\relax % (syntax is different when using a
+                                              %  command instead of a dimension)
+    Very small paragraph, barely a single line.}
+  \flushnextbox}
 
 
+\clearpage
+\section{\macro{framed}/\type{framedtext} (environment)}
 
+\makeatletter
 
-% \def\ensure#1#2#3\relax{%
-%   \ifdim#3#2#1\def#1{\dimexpr#3\relax}\fi}
+No options\par
+\framed{toto et titi}
+\framed{toto et titi et tutu}
 
-% \scratchdimen100pt
-% \the\scratchdimen
+\texttt{width=70pt}\par
+\framed[width=70pt]{toto et titi}
+\framed[width=70pt]{toto et titi et tutu}
 
-% \ensure \scratchdimen > 200pt \relax
-% \the\scratchdimen
+\texttt{minwidth=70pt}\par
+\framed[minwidth=70pt]{toto et titi}
+\framed[minwidth=70pt]{toto et titi et tutu}
 
-% \ensure \scratchdimen < 150pt \relax
-% \the\scratchdimen
+\texttt{maxwidth=70pt}\par
+\framed[maxwidth=70pt]{toto et titi}
+\framed[maxwidth=70pt]{toto et titi et tutu}
 
+\blank[2*line]
+\newcommand\crossout[1][]{%
+  \framed[%
+    offset=0pt, frame=off, background=on,
+    background/custom={
+      \begin{pgfonlayer}{foreground}
+        \path [draw=red, line cap=round, very thick, #1]
+          (0,0) -- (\framedboxwd,-\framedboxht)
+          (0,-\framedboxht) -- (\framedboxwd,0);
+      \end{pgfonlayer}}]}
+
+\leavevmode
+\crossout{this is wrong} and this is right
+
+\blank[line]
+\crossout[line width=20pt]{\blindtext}
+
+\blank[2*line]
+Available options\par
+\begin{itemize}
+\item lengths: %
+  \texttt{width, minwidth, maxwidth, height, minheight, maxheight};
+\item lengths with left/right/top/bottom prefix: %
+  \texttt{margin, offset};
+\item \texttt{align}:\\
+  horizontal \texttt{flushleft/flushright/center}\\
+  vertical \texttt{top/bottom/middle} or any combination;
+\item \texttt{vmode}: \texttt{yes/no} to start in vmode or not;
+\item \texttt{frame, background}: \texttt{on/off} and also
+  \texttt{frame/custom} to give your own tikz path (also background);
+\item \texttt{options}: passed to tikzpicture environment.
+\end{itemize}
 
 
 \end{document}
