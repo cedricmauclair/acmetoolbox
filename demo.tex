@@ -44,7 +44,7 @@ hellohello/%
 \def\toto{toto}%
 \getparameters[toto]{titi=\toto}%
 \defaultsep{, }%
-\geteparameters[etoto]{titi=\toto, titi=tata}
+\geteparameters[etoto]{titi=tata, titi=\toto}
 \def\toto{tata}
 
 \begin{itemize}
@@ -58,6 +58,18 @@ hellohello/%
 \def\putparen#1{(#1)}
 (one)(two)(three=four)/%
 \processcommalist[one, two, three=four]\putparen
+
+
+\section{\macro{splitkeyval}}
+
+\makeatletter
+\splitkeyval{key}
+key/\@@key, /\@@value
+
+\splitkeyval{key=value}
+key/\@@key, value/\@@value
+\makeatother
+
 
 
 \clearpage
@@ -74,7 +86,7 @@ hellohello/%
   \flushnextbox}
 
 \fbox{%
-  \emboxit[width=0.85\textwidth,  vmode=no]{%
+  \emboxit[width=0.85\textwidth,  hmode]{%
     \hbox{\bf hmode} \blindtext}
   \flushnextbox}
 
@@ -166,7 +178,7 @@ No options\par
 
 \texttt{maxwidth=70pt}\par
 \framed[maxwidth=70pt]{toto et titi}
-\framed[maxwidth=70pt]{toto et titi et tutu}
+\framed[maxwidth=70pt, align=raggedright]{toto et titi et tutu}
 
 \blank[2*line]
 \newcommand\crossout[1][]{%
@@ -200,6 +212,25 @@ Available options\par
   \texttt{frame/custom} to give your own tikz path (also background);
 \item \texttt{options}: passed to tikzpicture environment.
 \end{itemize}
+
+
+\clearpage
+\section{\macro{inframed}}
+
+This is some \inframe{inframed text that goes down.} See how it fits
+nicely in the paragraph. There may even be several lines. There may even
+be several lines. There may even be several lines. There may even be
+several lines. There may even be several lines. There may even be
+several lines. There may even be several lines.
+
+\section{\macro{(simple)groupedcommand}}
+
+\def\bold{\simplegroupedcommand{\bfseries}{}}
+\def\colored{\simplegroupedcommand{\color{red}}{}}
+
+\bold{Should be bold} --- {\bold should be bold also.}
+\colored{Should be bold} --- {\colored should be colored also.}
+This text is normal.
 
 
 \end{document}

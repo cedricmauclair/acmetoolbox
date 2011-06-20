@@ -1,4 +1,4 @@
-% Time-stamp: <2011-05-12 18:03:38 cmauclai>
+% Time-stamp: <2011-06-20 15:51:22 cmauclai>
 %
 % Copyright 2010 by Cedric Mauclair
 %
@@ -70,19 +70,28 @@
 %D
 %D Example:
 %D
-%D \doifinstringelse{=}{arg}{key/value list}{simple list}
-%D \doifassingmentelse{arg}{key/value list}{simple list}
+%D \doifinstringelse{=}{arg}{key/value list}{simple list}% no equal signs
+%D \doifassingmentelse{arg}{key/value list}{simple list} % no equal signs
 
 \def\doifinstringelse#1#2#3#4{%
   \pgfutil@in@{#1}{#2}%
   \ifpgfutil@in@#3\else#4\fi}
 \def\doifassignmentelse{\doifinstringelse{=}}
 
-%D macro \doifpositive
+
+%D macros \doifdimensionelse
+%D        \doifpositive
+%D        \doifnegative
+%D
+%D Example:
+%D
+%D \doifdimensionelse{\mydim>0pt}{this}{or that}
+%D \doifpositive\mydim{this}
+%D \doifnegative\mydim{or that}
 
 \long\def\doifdimensionelse#1#2#3{\ifdim#1#2\else#3\fi}
-\long\def\doifpositive#1#2{\doifdimensionelse{#1>0pt}{#2}{}}
-\long\def\doifnegative#1#2{\doifdimensionelse{#1>0pt}{}{#2}}
+\long\def\doifpositive     #1#2{\doifdimensionelse{#1>0pt}{#2}{}}
+\long\def\doifnegative     #1#2{\doifdimensionelse{#1>0pt}{}{#2}}
 
 %>>
 %<< [· Usefull loop features ·················] >>
@@ -91,7 +100,7 @@
 %D
 %D Example:
 %D
-%D \def\enclose#1{(#1)}
+%D \def\print#1{(#1)}
 %D \processcommalist[one, two, three=four]\print
 %D         ==> (one)(two)(three=four)
 
@@ -101,7 +110,22 @@
 %>>
 %<< [· Usefull macros ························] >>
 
-% set dimen to an expression
+%D macros \setlen,
+%D        \gsetlen,
+%D        \setlencs,
+%D        \gsetlencs
+%D
+%D Useful to set length and macros to expand to lengths.
+%D Prefix with 'g' to set globally.
+%D
+%D Example:
+%D
+%D \newdimen\somelength% required, register must exist
+%D \setlen\somelength{12pt+3pt}  --> \the\somelength = 15pt
+%D
+%D \def\somemacro{}% optionnal
+%D \setlencs\somemacro{12pt+3pt} --> \somemacro = 15pt
+
 \def\setlen#1#2{#1\dimexpr#2\relax\ignorespaces}
 \def\gsetlen#1#2{\global#1\dimexpr#2\relax\ignorespaces}
 
@@ -114,7 +138,23 @@
   \@EA\gdef\@EA#1\@EA{\the\scratchdimen}%
   \ignorespaces}
 
-% ensure a dimen in above/below an expression
+
+%D macros \ensure,
+%D        \ensurecs
+%D
+%D Useful to ensure length are bounded.
+%D Prefix with 'g' to set globally.
+%D
+%D Example:
+%D
+%D \newdimen\somelength% required, register must exist
+%D \setlen\somelength{12pt+3pt}  --> \the\somelength = 15pt
+%D \ensure\somelength<{12pt+1pt} --> \the\somelength = 13pt
+%D                   means less or equal actually
+%D
+%D \def\somemacro{15pt}
+%D \ensurecs\somemacro<13pt      --> \somemacro = 13pt
+
 \def\ensure #1#2#3\relax{%
   \ifdim#3#2#1 #1{\dimexpr#3\relax}\fi\ignorespaces}
 \def\gensure#1#2#3\relax{%
@@ -135,20 +175,20 @@
 
 %<< [· Split key=val into macros ·············] >>
 
-%D macros \toolboxunpack
+%D macros \splitkeyval
 %D
 %D Example:
 %D
-%D \toolboxunpack{key}
+%D \splitkeyval{key}
 %D         ==> \edef\@@key={key}, \def\@@value{}
 %D
-%D \toolboxunpack{key=value}
+%D \splitkeyval{key=value}
 %D         ==> \edef\@@key={key}, \def\@@value{value}
 
-\def\toolboxunpack#1{%
-  \toolbox@unpack#1=\pgfkeysnovalue=\toolbox@stop}
+\def\splitkeyval#1{%
+  \dosplitkeyval#1=\pgfkeysnovalue=\splitkeyval}
 
-\long\def\toolbox@unpack#1=#2=#3\toolbox@stop{%
+\long\def\dosplitkeyval#1=#2=#3\splitkeyval{%
   \begingroup
   \pgfkeys@spdef\@@key{#1}%
   \xdef\@@key{\@@key}%
@@ -169,9 +209,9 @@
 %D        \expandtwoargs,
 %D        \expanded
 %D
-%D Does a once expansion of its first argument and its first two
-%D arguments respectively. \expanded does a full expansion of its
-%D argument except the first token respectively.
+%D Does a expansion of its first argument and its first two arguments
+%D respectively. \expanded does a full expansion of its argument except
+%D the first token.
 %D
 %D Example:
 %D
@@ -198,7 +238,7 @@
 %D Example:
 %D
 %D \def\command{\dosingleempty\docommand}
-%D \def\docommand[#1]#2{}
+%D \def\docommand[#1]{...}
 %D
 %D \command{no optionnal argument}
 %D         ==> \iffirstargument=\iffalse
@@ -252,41 +292,47 @@
 
 %<< [· Easy parameters management ············] >>
 
-%D pgfkeys handlers to store a key in a macro named by a string.
+\def\setvalue  #1{\@EA \def\csname#1\endcsname}
+\def\setgvalue #1{\@EA\gdef\csname#1\endcsname}
+\def\setevalue #1{\@EA\edef\csname#1\endcsname}
+\def\setxvalue #1{\@EA\xdef\csname#1\endcsname}
 
-\def\setvalue     #1{\@EA \def\csname#1\endcsname}
-\def\setgvalue    #1{\@EA\gdef\csname#1\endcsname}
-\def\setevalue    #1{\@EA\edef\csname#1\endcsname}
-\def\setxvalue    #1{\@EA\xdef\csname#1\endcsname}
-
-\def\letvalue     #1{\@EA\let\csname#1\endcsname}
-\def\letgvalue    #1{\global\@EA\let\csname#1\endcsname}
+\def\letvalue  #1{\@EA\let\csname#1\endcsname}
+\def\letgvalue #1{\global\@EA\let\csname#1\endcsname}
 
 \def\resetvalue   #1{\@EA\let\csname#1\endcsname\empty}
 \def\ignorevalue#1#2{\@EA\let\csname#1\endcsname\empty}
 
-\def\getvalue     #1{\csname#1\endcsname}
+\def\getvalue  #1{\csname#1\endcsname}
 
 \def\copyvalue#1#2#3%
   {\@EA\def\csname#1#3\endcsname{\csname#2#3\endcsname}}
 
 
-%D macros \declareparameters
-%D        \getparameters
-%D        \geteparameters
+%D macros \declareparameters,
+%D        \getparameters,
+%D        \geteparameters,
 %D        \dodoubleargumentwithset
 %D
 %D Example
 %D
-%D \declareparameters
-%D \getparameters
-%D \geteparameters
+%D \declareparameters[prefix]{echo/.append to=\echo,
+%D                            echo/.append code=#1+}
+%D \defaultsep{, }
+%D \getparameters[prefix]{echo=one, echo=two, echo=three}
+%D   --> outputs 'one+two+three+' in document
+%D   --> \echo = one, two, three
+%D
+%D \def\toto{toto}
+%D \geteparameters[prefix][tata=\toto]
+%D \def\toto{tata}
+%D   --> \prefixtata = toto (expanded at definition)
 
 \def\@@prefix{}
 
 \newcommand\declareparameters[2][]{%
-  \pgfqkeys{/parameters}{declare family=#1}% set \@@prefix too
-  \pgfqkeys{/parameters}{#2}\ignorespaces}
+  \pgfqkeys{/parameters}{declare family=#1}% set \@@prefix
+  \pgfqkeys{/parameters}{#2}\ignorespaces}%  use \@@prefix in definition
 
 \newcommand\getparameters[2][]{%
   \pgfqkeys{/parameters}{prefix=#1}% set \@@prefix
@@ -297,12 +343,18 @@
   \pgfqkeys{/eparameters\if @#1@\else/#1\fi}{#2}\ignorespaces}
 
 \def\dodoubleargumentwithset#1[#2][#3]{%
-  \def\acme@@process##1{#1[##1][#3]}%
-  \processcommalist[#2]\acme@@process
+  \def\doit##1{#1[##1][#3]}%
+  \processcommalist[#2]\doit
   \ignorespaces}
 
 %>>
 %<< [· Get parameters without checking ·······] >>
+
+%D macros \getrawparameters,
+%D        \getraweparameters,
+%D        \copyrawparameters
+%D
+%D Same as above, but does not check for existing keys.
 
 \newcommand\getrawparameters[1][]{%
   \pgfqkeys{/parameters}{prefix=#1}% set \@@prefix
@@ -345,35 +397,46 @@
 %<< [· Put some space around boxes ···········] >>
 
 % helpers
-\def\inserttoifpositive#1{\doifpositive#1{to #1}}
-\def\sethsizeifpositive#1{\doifpositive#1{\hsize=#1}}
+\def\onlypositivelength#1{\doifpositive#1{to #1}}
+\def\onlypositivehsize #1{\doifpositive#1{\hsize=#1}}
 
 %D macros \emboxit
 %D
 %D Put some content into a box.
 
 \declareparameters[emboxit]{%
-  parameters={align},
-  dimensions={width, height},
+  parameters={align},         % accept anything
+  dimensions={width, height}, % accept only valid dimensions
   % fine tuning needs explicit prefix
   emboxit,
   % start in vmode or not, default is 'yes'
+  vmode/.default=yes,         % accept 'yes/no' or 'true/false'
   vmode/.is choice,
   vmode/yes/.code=\emboxitvmodetrue,
-  vmode/no/.code=\emboxitvmodefalse}
+  vmode/no/.code=\emboxitvmodefalse,
+  % compatibility
+  vmode/true/.style={vmode=yes},
+  vmode/false/.style={vmode=no},
+  % be symmetric
+  hmode/.default=yes,         % accept 'yes/no' or 'true/false'
+  hmode/.is choice,
+  hmode/yes/.style={vmode=no},
+  hmode/no/.style={vmode=yes},
+  hmode/true/.style={vmode=no},
+  hmode/false/.style={vmode=yes}}
 
 \newif\ifemboxitvmode
 
 \def\emboxit{\dosingleempty\doemboxit}
 \long\def\doemboxit[#1]{%
   \getparameters [emboxit]
-    {vmode=yes, align=, width=-1pt, height=-1pt, #1}%
+    {vmode, align=, width=-1pt, height=-1pt, #1}%
   \afterassignment\dodoemboxit\scratchtoken}
 
 \def\dodoemboxit{%
   \setbox\nextbox=\vbox
-    \inserttoifpositive\emboxitheight{% [·height·]
-      \sethsizeifpositive\emboxitwidth% [·width·]
+    \onlypositivelength\emboxitheight{% [·height·]
+      \onlypositivehsize\emboxitwidth% [·width·]
       \ifemboxitvmode\else\leavevmode\fi
       \emboxitalign\the\scratchtoken}%
   \setlencs\emboxitwidth\nextboxwd
@@ -386,15 +449,25 @@
 %D Embox content then put *things* arround it.
 
 \declareparameters[wrapit]{%
-  parameters={align, left, right, top, bottom},
-  dimensions={width, height, allwidth, allheight},
+  parameters={align, left, right, top, bottom},    % accept anything
+  dimensions={width, height, allwidth, allheight}, % accept only valid dimensions
   % fine tuning needs explicit prefix
   wrapit,
   % start in vmode or not, default is 'yes'
+  vmode/.default=yes,                % accept 'yes/no' or 'true/false'
   vmode/.is choice,
   vmode/yes/.code=\emboxitvmodetrue,
   vmode/no/.code=\emboxitvmodefalse,
-  % placement of text inside box
+  vmode/true/.style={vmode=yes},
+  vmode/false/.style={vmode=no},
+  % be symmetric
+  hmode/.default=yes,                % accept 'yes/no' or 'true/false'
+  hmode/.is choice,
+  hmode/yes/.style={vmode=no},
+  hmode/no/.style={vmode=yes},
+  hmode/true/.style={vmode=no},
+  hmode/false/.style={vmode=yes},
+  % placement of text inside box (ie, useful shortcuts)
   north/.style={left=\hss, right=\hss, bottom=\vss},
   south/.style={left=\hss, right=\hss, top=\vss},
   west/.style={right=\hss, top=\vss, bottom=\vss},
@@ -408,8 +481,8 @@
 \def\wrapit{\dosingleempty\dowrapit}
 \def\dowrapit[#1]{%
   \getparameters [wrapit]
-    {vmode=yes, align=, width=-1pt, height=-1pt,
-     allwidth=-10pt, allheight=-1pt,
+    {vmode, align=, width=-1pt, height=-1pt,
+     allwidth=-1pt, allheight=-1pt,
      left=, right=, top=, bottom=, #1}%
   \getparameters [emboxit]
     {align=\wrapitalign, width=\wrapitwidth, height=\wrapitheight}%
@@ -424,9 +497,9 @@
   \doifpositive\wrapitallheight
     {\ensurecs\wrapitallheight>\emboxitheight\relax}%
   \setbox\nextbox=
-  \vbox \inserttoifpositive\wrapitallheight{%    [·height·]
+  \vbox \onlypositivelength\wrapitallheight{%    [·height·]
       \wrapittop
-      \hbox \inserttoifpositive\wrapitallwidth{% [·width·]
+      \hbox \onlypositivelength\wrapitallwidth{% [·width·]
         \wrapitleft\box\nextbox\wrapitright}%
       \wrapitbottom}\ignorespaces}
 
@@ -435,8 +508,8 @@
 %D Put *things* arround an existing box.
 
 \declareparameters[wrapbox]{%
-  parameters={left, right, top, bottom},
-  dimensions={width, height},
+  parameters={left, right, top, bottom}, % accept anything
+  dimensions={width, height},            % accept only valid dimensions
   % fine tuning needs explicit prefix
   wrapbox,
   % placement of text inside box
@@ -472,9 +545,9 @@
   \doifpositive\wrapboxheight
     {\ensurecs\wrapboxheight>\nextboxht\relax}%
   \setbox\nextbox=
-  \vbox \inserttoifpositive\wrapboxheight{%    [·height·]
+  \vbox \onlypositivelength\wrapboxheight{%    [·height·]
       \wrapboxtop
-      \hbox \inserttoifpositive\wrapboxwidth{% [·width·]
+      \hbox \onlypositivelength\wrapboxwidth{% [·width·]
         \wrapboxleft\box\nextbox\wrapboxright}%
       \wrapboxbottom}\ignorespaces}
 
@@ -493,10 +566,13 @@
 
 %<< ———— available settings                —————————————— >>
 
+% seperate key values (in 'options' key) with commas.
+\defaultsep{,}
+
 \declareparameters[framed@]{%
-  parameters={%
+  parameters={% accept anything
     left, right, top, bottom},
-  dimensions={%
+  dimensions={% accept only valid dimension
     width,  minwidth,  maxwidth,
     height, minheight, maxheight,
     leftmargin, rightmargin, topmargin, bottommargin,
@@ -506,9 +582,18 @@
   % ———[·~ options ~·]———
   options/.append to=\framed@options,
   % ———[·~ vmode ~·]———
+  vmode/.default=yes,
   vmode/.is choice,
   vmode/yes/.code=\let\framed@vmode\const@yes,
   vmode/no/.code=\let\framed@vmode\const@no,
+  vmode/true/.style={vmode=yes},
+  vmode/false/.style={vmode=no},
+  hmode/.default=no,
+  hmode/.is choice,
+  hmode/yes/.style={vmode=no},
+  hmode/no/.style={vmode=yes},
+  hmode/true/.style={vmode=no},
+  hmode/false/.style={vmode=yes},
   % ———[·~ margins & offsets ~·]———
   margin/.style=
     {leftmargin=#1, rightmargin=#1, topmargin=#1, bottommargin=#1},
@@ -517,12 +602,12 @@
   % ———[·~ frame ~·]———
   frame/.style={@frame/.list={#1}},
   frame/custom/.code=\def\framed@@framecustom{#1},
+  @frame/.is choice, % accept 'clean', 'left', 'right', 'top', 'bottom'
   @frame/clean/.code=
     \let\framed@leftframe\@empty
     \let\framed@rightframe\@empty
     \let\framed@topframe\@empty
     \let\framed@bottomframe\@empty,
-  @frame/.is choice,
   @frame/left/.code=
     \let\framed@leftframe\framed@@leftframe
     \let\framed@frame\@empty,
@@ -542,6 +627,9 @@
   @frame/off/.code=
     \let\framed@frame\@empty,
   @frame/off/.prefix style={@frame=clean},
+  % compatibility
+  @frame/true/.style={@frame=on},
+  @frame/false/.style={@frame=off},
   % ———[·~ background ~·]———
   background/.is choice,
   background/on/.code=\def\framed@background{%
@@ -555,13 +643,19 @@
   height/.append style={minheight=#1, maxheight=#1},
   % ———[·~ horizontal alignment ~·]———
   align/.style={@align/.list={#1}},
-  @align/.is choice,
+  @align/.is choice, % accept 'default', 'center',
+                     % 'right/left' (ie raggedright/raggedleft),
+                     % 'flushleft/flushright'
   @align/default/.code=\let\framed@align\@empty,
   @align/right/.code=\let\framed@align\raggedright,
   @align/left/.code=\let\framed@align\raggedleft,
+  @align/raggedright/.style={@align=right},
+  @align/raggedleft/.style={@align=left},
   @align/center/.code=\let\framed@align\centering,
-  @align/flushleft/.style={@align=right},
-  @align/flushright/.style={@align=left}
+  @align/flushleft/.code=\def\framed@align{\flushleft\removelastskip},
+  @align/flushleft/.append style={hmode},
+  @align/flushright/.code=\def\framed@align{\flushright\removelastskip},
+  @align/flushright/.append style={hmode},
   % ———[·~ vertical alignment ~·]———
   @align/top/.code=
     \let\framed@top\@empty\let\framed@bottom\vss,
@@ -592,14 +686,13 @@
 \def\framed{\dosingleempty\doframed}
 \long\def\doframed[#1]#2{\begingroup
   \setupframed
-    {frame=on,    background=off, vmode=no,
+    {frame=on,    background=off, hmode, % start in hmode by default
      margin=0pt,  offset=3pt,
      width=-1pt,  minwidth=-1pt,  maxwidth=\hsize,
      height=-1pt, minheight=-1pt, maxheight=\maxdimen,
      left=, right=, top=, bottom=,
      align={default, middle},
      options={draw, fill=white, thick}, #1}
-  % \let\\\newline
   %% —————————————————————————————————————————————————— %%
   % [·adjust size of text: width·]
   \doifnegative\framed@width{%
@@ -663,7 +756,7 @@
 \newenvironment{framedtext}[1][]
 {\begingroup
  \def\framedtext@options{#1}%
- \setupframed{vmode=yes, width=\hsize, offset=3pt, align=default, #1}
+ \setupframed{vmode, width=\hsize, offset=3pt, align=default, #1}
  \setbox\nextbox\vbox\bgroup
    \hsize=\dimexpr\framed@width-\framed@leftoffset
                                -\framed@rightoffset\relax
@@ -678,23 +771,14 @@
 %>>
 %<< [· Inframed text (use \hbox) ·············] >>
 
-% \def\strutdp{\dp\strutbox}
-% \def\strutht{\ht\strutbox}
-% \def\strutwd{\wd\strutbox}
-
-% \def\insidestrut{%
-%   \vrule height\dimexpr\strutht-\acmeframedtopoffset\relax
-%          depth\dimexpr\strutdp-\acmeframedbottomoffset\relax
-%          width0pt}
-
-% \def\inframe{\dosingleempty\doinframe}
-% \def\doinframe[#1]#2{%
-%   \setbox\nextbox=\vbox{%
-%     \framed[offset=2pt, bottomoffset=\strutdp,
-%             leftmargin=-1pt, rightmargin=-1pt,
-%             tikzoptions={draw, fill}, #1]
-%     {\insidestrut#2}}%
-%   \raisebox{-\nextdepth}{\box\nextbox}}
+\def\inframe{\dosingleempty\doinframe}
+\def\doinframe[#1]#2{%
+  \setbox\nextbox=\vbox{%
+    \framed[hmode, offset=2pt, align=default,% start in hmode
+            top=, bottom=, #1]
+    {\gsetlen\scratchdimen
+      {-\framed@bottomoffset-\framed@bottommargin}#2}}%
+  \raisebox\scratchdimen{\box\nextbox}}
 
 %>>
 
@@ -713,8 +797,6 @@
   half/.style={@blank=.5\baselineskip},
   line/.style={@blank=\baselineskip},
   .unknown/.style={@blank=\pgfkeyscurrentname}}
-
-\def\setlen#1#2{#1=\dimexpr#2\relax}
 
 \newcommand\blank[1][line]{%
   \scratchdimen0pt
@@ -735,6 +817,18 @@
 
 %>>
 %<< [· Commands or switch macros ·············] >>
+
+%D macros \groupedcommand,
+%D        \simplegroupedcommand
+%D
+%D Let us create commands that can work as switches too.
+%D The 'simple' version only group once, so kerning should not be
+%D a problem.
+%D
+%D Example:
+%D
+%D \def\bold{\groupedcommand{\bf}{\relax}}% 'before' and 'after'
+%D   --> \bold{text} or {\bold text}
 
 \long\def\HandleGroup#1#2%
   {\bgroup
@@ -759,18 +853,6 @@
 
 \long\def\simplegroupedcommand#1#2%
   {\doifnextbgroupelse{\HandleSimpleGroup{#1}{#2}}{\HandleNoGroup{#1}{#2}}}
-
-%>>
-
-%<< * \definelanguageswitch                     >>
-
-% \def\definelanguageswitch{\dotripleempty\dodefinelanguageswitch}
-% \def\dodefinelanguageswitch[#1][#2][#3]{%
-%   \ifthirdargument
-%     \@EA\def\csname#2\endcsname{\simplegroupedcommand{\selectlanguage{#1}#3}{}}
-%   \else
-%     \@EA\def\csname#1\endcsname{\simplegroupedcommand{\selectlanguage{#1}#2}{}}
-%   \fi}
 
 %>>
 
